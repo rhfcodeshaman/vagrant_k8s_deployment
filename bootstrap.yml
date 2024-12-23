@@ -1,0 +1,42 @@
+- name : Configure the Load Balancer
+  hosts: lb
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/apt.yml
+    - vars/k8s.yml
+    - vars/lb.yml
+    - vars/etcd.yml
+  roles:
+    - prerequisites
+    - haproxy
+    - etcd-gateway
+
+- name: Bootstrap the Kubernetes Cluster
+  hosts:
+    - node0
+    - node1
+    - node2
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/tls.yml
+    - vars/apt.yml
+    - vars/lb.yml
+    - vars/k8s.yml
+    - vars/etcd.yml
+  environment:
+    KUBECONFIG: /var/lib/kubernetes/admin.kubeconfig
+  roles:
+    - prerequisites
+    - role: tls-ca
+      run_once: true
+    - tls
+    - kubeconfig
+    - encryption
+    - etcd-gateway- k8s
+    - worker
+    - role: coredns
+      run_once: true
+    - role: cilium
+      run_once: true
