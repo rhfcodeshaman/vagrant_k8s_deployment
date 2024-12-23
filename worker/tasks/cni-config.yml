@@ -1,0 +1,69 @@
+- name: Ensure CNI directory exists
+  ansible.builtin.file:
+    path: /etc/cni/net.d/
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - never
+- name: Configure CNI Networking
+  ansible.builtin.copy:
+    content: |
+      {
+        "cniVersion": "1.0.0",
+        "name": "containerd-net",
+        "plugins": [
+          {
+            "type": "bridge",
+            "bridge": "cni0",
+            "isGateway": true,
+            "ipMasq": true,
+            "promiscMode": true,
+            "ipam": {
+              "type": "host-local",
+              "ranges": [
+                [{
+                  "subnet": "{{ pod_subnet_cidr_v4 }}"
+                }]
+              ],
+              "routes": [
+                { "dst": "0.0.0.0/0" }
+              ]
+            }
+          },
+          {
+            "type": "portmap",
+            "capabilities": {"portMappings": true}
+          }
+        ]
+      }
+    dest: /etc/cni/net.d/10-containerd-net.conf
+    owner: root
+    group: root
+    mode: "0640"
+  tags:
+    - never
+- name: Ensure containerd directory exists
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Get containerd default config
+  ansible.builtin.command: containerd config default
+  changed_when: false
+  register: containerd_default_config
+  tags:
+    - config
+- name: Configure containerd
+  ansible.builtin.copy:
+    content: "{{ containerd_default_config.stdout }}"
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: "0640"
+  tags:
+    - config
+  notify: Restart containerd

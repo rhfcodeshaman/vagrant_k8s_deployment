@@ -1,0 +1,33 @@
+- name: Generate API Server private key
+  community.crypto.openssl_privatekey:
+    path: /etc/kubernetes/pki/kube-apiserver.key
+    type: "{{ k8s_privatekey_type }}"
+- name: Generate API Server CSR
+  community.crypto.openssl_csr:
+    basicConstraints_critical: true
+    basic_constraints:
+      - CA:FALSE
+    common_name: kube-apiserver
+    extKeyUsage_critical: false
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - keyEncipherment
+      - dataEncipherment
+    keyUsage_critical: true
+    path: /etc/kubernetes/pki/kube-apiserver.csr
+    privatekey_path: /etc/kubernetes/pki/kube-apiserver.key
+    subject:
+      O: system:kubernetes
+      OU: Kubernetes The Hard Way
+    subject_alt_name: "{{ lookup('template', 'apiserver-alt-names.yml.j2') | from_yaml }}"
+- name: Create API Server TLS certificate using CA key and cert
+  community.crypto.x509_certificate:
+    path: /etc/kubernetes/pki/kube-apiserver.crt
+    csr_path: /etc/kubernetes/pki/kube-apiserver.csr
+    privatekey_path: /etc/kubernetes/pki/kube-apiserver.key
+    ownca_path: /vagrant/share/ca.crt
+    ownca_privatekey_path: /vagrant/share/ca.key
+    ownca_not_after: +365d
+    provider: ownca

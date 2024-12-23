@@ -1,0 +1,13 @@
+---
+- name: Generate KubeConfig for kubelet
+  ansible.builtin.template:
+    src: kubeconfig.yml.j2
+    dest: /var/lib/kubernetes/kubelet.kubeconfig
+    mode: "0640"
+    owner: root
+    group: root
+  vars:
+    kube_apiserver_address: localhost
+    kube_apiserver_port: 6443
+    client_cert_path: /etc/kubernetes/pki/kubelet.crt
+    client_key_path: /etc/kubernetes/pki/kubelet.key

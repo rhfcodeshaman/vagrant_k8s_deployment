@@ -1,0 +1,34 @@
+[Unit]
+Description=etcd
+Documentation=https://github.com/etcd-io/etcd
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/etcd \
+  --advertise-client-urls=https://{{ host_ip }}:2379 \
+  --cert-file=/etc/kubernetes/pki/etcd/server.crt \
+  --client-cert-auth \
+  --data-dir=/var/lib/etcd \
+  --initial-advertise-peer-urls=https://{{ host_ip }}:2380 \
+  --initial-cluster-state={{ etcd_initial_cluster_state }} \
+  --initial-cluster-token={{ etcd_initial_cluster_token }} \
+  --initial-cluster={{ etcd_initial_cluster }} \
+  --key-file=/etc/kubernetes/pki/etcd/server.key \
+  --listen-client-urls=https://{{ bind_address }}:2379 \
+  --listen-peer-urls=https://{{ bind_address }}:2380 \
+  --log-level info \
+  --log-outputs stderr \
+  --logger zap \
+  --name={{ etcd_peer_name }} \
+  --peer-cert-file=/etc/kubernetes/pki/etcd/server.crt \
+  --peer-client-cert-auth \
+  --peer-key-file=/etc/kubernetes/pki/etcd/server.key \
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+LimitNOFILE=40000
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

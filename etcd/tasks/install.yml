@@ -1,0 +1,29 @@
+---
+- name: Download etcd release tarball
+  ansible.builtin.get_url:
+    url: "{{ etcd_download_url }}"
+    dest: "{{ downloads_dir }}/{{ etcd_download_url | basename }}"
+    mode: "0644"
+    owner: root
+    group: root
+    checksum: sha256:{{ etcd_checksum }}
+  tags:
+    - download
+  register: etcd_download
+- name: Ensure gzip is installed
+  ansible.builtin.package:
+    name: gzip
+    state: present
+- name: Extract etcd from the tarball to /usr/local/bin/
+  ansible.builtin.unarchive:
+    src: "{{ etcd_download.dest }}"
+    dest: /usr/local/bin/
+    remote_src: true
+    mode: "0755"
+    extra_opts:
+      - --strip-components=1
+      - --wildcards
+      - "**/etcd"
+      - "**/etcdctl"
+      - "**/etcdutl"
+  notify: Reload etcd systemd

@@ -1,0 +1,22 @@
+- name: Download cilium-cli
+  ansible.builtin.get_url:
+    url: "{{ cilium_cli_url }}"
+    dest: "{{ downloads_dir }}/{{ cilium_cli_url | basename }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "sha256:{{ cilium_cli_checksum }}"
+  register: cilium_cli_download
+- name: Extract cilium bin to /usr/local/bin
+  ansible.builtin.unarchive:
+    src: "{{ cilium_cli_download.dest }}"
+    dest: /usr/local/bin/
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    extra_opts:
+      - cilium
+- name: Install cilium
+  ansible.builtin.command: cilium install
+  failed_when: false

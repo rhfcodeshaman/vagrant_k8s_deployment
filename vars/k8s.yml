@@ -1,0 +1,11 @@
+---
+host_ip: "{{ ansible_facts.all_ipv4_addresses | select('match', '^192.168.56') | first }}"
+k8s_version: v1.29.2
+apiserver_port: 6443
+apiserver_ips:
+  - 192.168.56.2
+  - 192.168.56.3
+  - 192.168.56.4
+cilium_version: 1.15.1
+k8s_static_pods_dir: /etc/kubernetes/manifests
+bind_address: "0.0.0.0"
